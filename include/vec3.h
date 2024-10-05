@@ -48,11 +48,12 @@ public:
     }
 
     double length_squared() const {
-        int res = 0;
-#pragma unroll 3
-        for(int i = 0; i < 3; ++i) 
-            res += e[i] * e[i];
-        return res;
+//         int res = 0;
+// #pragma unroll 3
+//         for(int i = 0; i < 3; ++i) 
+//             res += e[i] * e[i];
+//         return res;
+        return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
     }
 };
 
