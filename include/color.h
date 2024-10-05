@@ -1,8 +1,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include "general.h"
 #include "vec3.h"
-#include <iostream>
 
 using color = vec3;
 

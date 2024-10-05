@@ -8,6 +8,7 @@
 #include "color.h"
 #include "ray.h"
 #include "vec3.h"
+#include "interval.h"
 
 using std::make_shared;
 using std::shared_ptr;
