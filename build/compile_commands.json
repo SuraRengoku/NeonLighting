@@ -1,0 +1,8 @@
+[
+{
+  "directory": "E:/Projects/NeonLighting/build",
+  "command": "E:\\Works\\mingw64\\bin\\g++.exe  @CMakeFiles/NeonLighting.dir/includes_CXX.rsp -g -std=gnu++20 -o CMakeFiles\\NeonLighting.dir\\main.cpp.obj -c E:\\Projects\\NeonLighting\\main.cpp",
+  "file": "E:/Projects/NeonLighting/main.cpp",
+  "output": "CMakeFiles/NeonLighting.dir/main.cpp.obj"
+}
+]
