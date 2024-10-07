@@ -6,7 +6,12 @@
 
 class sphere : public hittable {
 public:
-    sphere(const point3& center, double radius) : center(center), radius(std::fmax(0, radius)) {}
+    sphere(const point3& center, double radius, shared_ptr<material> mat) : 
+            center(center), 
+            radius(std::fmax(0, radius)), 
+            mat(mat) {
+        //TODO: Initialize the material pointer 'mat'. e.g. this -> mat
+    }
     //std::fmax() returns the maximum of the two floating-point arguments, similarly with std::fmin()
     bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
         vec3 oc = center - r.origin();
@@ -30,11 +35,13 @@ public:
         // rec.normal = (rec.p - center) / radius;
         vec3 outward_normal = (rec.p - center) / radius; //unit vector from sphere center to intersection point
         rec.set_face_normal(r, outward_normal);
+        rec.mat = this -> mat;
         return true;
     }
 private:
     point3 center;
     double radius;
+    shared_ptr<material> mat;
 };
 
 #endif
