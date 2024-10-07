@@ -124,6 +124,14 @@ inline vec3 unit_vector(const vec3& v) {
     return v / v.length();
 }
 
+inline vec3 random_in_unit_disk() {
+    while(true) {
+        auto p = vec3(random_double(-1, 1), random_double(-1, 1), 0);
+        if(p.length_squared() < 1)
+            return p;
+    }
+}
+
 //rejection model
 inline vec3 random_unit_vector() {
     while(true) {
@@ -143,5 +151,18 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
 
 inline vec3 reflect(const vec3& v, const vec3& n) {
     return v - 2 * dot(v, n) * n;
+}
+
+/*
+ * @param uv incident ray
+ * @param n normal
+ * @param etao_over_etai refractive index of outside material over counterpart of inside material
+ */
+inline vec3 refract(const vec3& uv, const vec3& n, double etao_over_etai) {
+    //cos_theta of two vectors: cos_theta = a · b / |a|*|b|, uv and n are all unit vectors
+    auto cos_theta = std::fmin(dot(-uv, n), 1.0);
+    vec3 r_out_perp = etao_over_etai * (uv + cos_theta * n);
+    vec3 r_out_parallel = -std::sqrt(std::fabs(1.0 - r_out_perp.length_squared())) * n;
+    return r_out_perp + r_out_parallel;
 }
 #endif
