@@ -4,6 +4,7 @@
 #include "hittable.h"
 #include "general.h"
 #include <vector>
+#include "interval.h"
 
 using std::vector;
 
