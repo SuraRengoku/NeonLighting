@@ -1,13 +1,15 @@
 #ifndef INTERVAL_H
 #define INTERVAL_H
 
-#include "general.h"
+#include "general.hpp"
 
 class interval {
-    public:
+  public:
     double min, max;
-    interval() : min(+infinity), max(-infinity) {} //default is empty
+    interval() : min(+infinity), max(-infinity) {}  // default is empty
     interval(double min, double max) : min(min), max(max) {}
+
+    interval(const interval& ia, const interval& ib);
 
     double size() const {
         return max - min;
@@ -19,16 +21,12 @@ class interval {
         return min < x && x < max;
     }
 
-    double clamp(double x) const {
-        if(x < min) return min;
-        if(x > max) return max;
-        return x;
-    }
+    double clamp(double x) const;
+
+    interval expand(double delta) const;
 
     static const interval empty, universe;
 };
 
-const interval interval::empty = interval(+infinity, -infinity);
-const interval interval::universe = interval(-infinity, + infinity);
 
 #endif

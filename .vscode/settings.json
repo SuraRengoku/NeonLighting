@@ -44,5 +44,21 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    
+    // C++ 特定设置
+    "[cpp]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "[c]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    
+    // 使用项目根目录的 .clang-format 文件
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_style": "file"
 }
