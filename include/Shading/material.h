@@ -1,11 +1,12 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include <memory>
 #include <random>
 
 #include "color.hpp"
 #include "general.hpp"
-#include "hittable.hpp"
+#include "hittable.h"
 #include "texture.h"
 
 class material {
@@ -19,6 +20,10 @@ class material {
     virtual bool scatter(const ray& ray_in, const hit_record& rec, color& attenuation,
                          ray& scattered, std::mt19937& rng = get_default_rng()) const {
         return false;
+    }
+
+    virtual color emitting(double u, double v, const point3& p) const {
+        return color(0, 0, 0);
     }
 };
 
@@ -75,6 +80,31 @@ class dielectric : public material {
     double refraction_index;  // inside / outside
 
     static double reflectance(double cosine, double refraction_index);
+};
+
+class diffuseEmissive : public material {
+  public:
+    diffuseEmissive(shared_ptr<texture> _tex) : tex(_tex) {}
+    diffuseEmissive(const color& emit) : tex(make_shared<solid_color>(emit)) {}
+
+    color emitting(double u, double v, const point3& p) const {
+        return tex->value(u, v, p);
+    }
+
+  private:
+    shared_ptr<texture> tex;
+};
+
+class isotropic : public material {
+  public:
+    isotropic(const color& albedo) : tex(make_shared<solid_color>(albedo)) {}
+    isotropic(shared_ptr<texture> tex) : tex(tex) {}
+
+    bool scatter(const ray& ray_in, const hit_record& rec, color& attenuation, ray& scattered,
+                 std::mt19937& rng = get_default_rng()) const override;
+
+  private:
+    shared_ptr<texture> tex;
 };
 
 #endif

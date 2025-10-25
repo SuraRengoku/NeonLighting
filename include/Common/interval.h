@@ -2,6 +2,7 @@
 #define INTERVAL_H
 
 #include "general.hpp"
+#include "vec3.h"
 
 class interval {
   public:
@@ -26,7 +27,10 @@ class interval {
     interval expand(double delta) const;
 
     static const interval empty, universe;
-};
 
+    friend interval operator+(const interval& ival, double displacement);
+
+    friend interval operator+(double displacement, const interval& ival);
+};
 
 #endif

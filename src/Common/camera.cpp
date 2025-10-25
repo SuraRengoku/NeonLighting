@@ -1,10 +1,16 @@
+#include <random>
+
 #include "camera.h"
+#include "general.hpp"
 
 void camera::initialize() {
     image_height = int(image_width / aspect_ratio);
     image_height = (image_height >= 1) ? image_height : 1;
 
-    pixel_samples_scale = 1.0 / samples_per_pixel;
+    sqrt_spp = static_cast<int>(std::sqrt(samples_per_pixel));
+    // pixel_samples_scale = 1.0 / samples_per_pixel;
+    pixel_samples_scale = 1.0 / (sqrt_spp * sqrt_spp);
+    recip_sqrt_spp      = 1.0 / sqrt_spp;
 
     center = lookfrom;
 
@@ -59,9 +65,11 @@ void camera::render(const hittable& world) {
              we'll select samples from the area surrounding the pixel and
              average the resulting light (color) values together.
              */
-            for (int sample = 0; sample < samples_per_pixel; ++sample) {
-                ray r = get_ray(i, j);
-                pixel_color += ray_color(r, max_depth, world);
+            for (int s_j = 0; s_j < sqrt_spp; ++s_j) {
+                for (int s_i = 0; s_i < sqrt_spp; ++s_i) {
+                    ray r = get_ray(i, j, s_i, s_j);
+                    pixel_color += ray_color(r, max_depth, world);
+                }
             }
             write_color(std::cout, pixel_samples_scale * pixel_color);
         }
@@ -86,9 +94,11 @@ void camera::render_acc(const hittable& world) {
         for (int j = h0; j < h1; ++j) {
             for (int i = 0; i < W; ++i) {
                 color pixel_color(0, 0, 0);
-                for (int sample = 0; sample < samples_per_pixel; ++sample) {
-                    ray r = get_ray(i, j, rng);
-                    pixel_color += ray_color(r, max_depth, world, rng);
+                for (int s_j = 0; s_j < sqrt_spp; ++s_j) {
+                    for (int s_i = 0; s_i < sqrt_spp; ++s_i) {
+                        ray r = get_ray(i, j, s_i, s_j);
+                        pixel_color += ray_color(r, max_depth, world);
+                    }
                 }
                 framebuffer[j * W + i] = pixel_samples_scale * pixel_color;
             }
@@ -129,8 +139,9 @@ void camera::ProgressBar(double progress) {
     std::clog.flush();
 }
 
-ray camera::get_ray(int i, int j, std::mt19937& rng) const {
-    auto offset = sample_square(rng);
+ray camera::get_ray(int i, int j, int s_i, int s_j, std::mt19937& rng) const {
+    auto offset = sample_square_stratified(s_i, s_j, rng);
+    // auto offset = sample_square(rng);
     // current pixel location: pixel100_loc + i * pixel_delta_u + j * pixel_delta_v, e.g. the
     // middle point of current pixel
     auto pixel_sample =
@@ -147,6 +158,19 @@ vec3 camera::sample_square(std::mt19937& rng = get_default_rng()) const {
     return vec3(random_double_t_safe(rng) - 0.5, random_double_t_safe(rng) - 0.5, 0);
 }
 
+/**
+ * @brief an uniform distribution on [-0.5, 0.5) by using stratification, making edges sharper and
+ * helping reduce aliasing and moire pattern
+ * @param s_i the row index of gird
+ * @param s_j the column index of grid
+ */
+vec3 camera::sample_square_stratified(int s_i, int s_j,
+                                      std::mt19937& rng = get_default_rng()) const {
+    auto px = ((s_i + random_double_t_safe(rng)) * recip_sqrt_spp) - 0.5;
+    auto py = ((s_j + random_double_t_safe(rng)) * recip_sqrt_spp) - 0.5;
+    return vec3(px, py, 0);
+}
+
 point3 camera::defocus_disk_sample(std::mt19937& rng = get_default_rng()) const {
     auto p = random_in_unit_disk(rng);  // only in x-y plane
     return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
@@ -158,19 +182,23 @@ color camera::ray_color(const ray& r, int depth, const hittable& world, std::mt1
     hit_record rec;
     // 0.001 to overlook hits that are very close to the calculated intersection point to avoid
     // self-reflection
-    if (world.hit(r, interval(0.001, infinity), rec)) {
-        // vec3 direction = Lambertian_Ref ? rec.normal + random_unit_vector() :
-        // random_on_hemisphere(rec.normal);
-        // //return 70% of the color from a bounce
-        // return 0.7 * ray_color(ray(rec.p, direction), depth - 1, world);//recursive
 
-        ray scattered;
-        color attenuation;
-        if (rec.mat->scatter(r, rec, attenuation, scattered, rng))
-            return attenuation * ray_color(scattered, depth - 1, world, rng);
-        return color(0, 0, 0);
-    }
-    vec3 unit_direction = unit_vector(r.direction());
-    auto a              = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
+    // if the ray hits nothing, return the background color
+    if (!world.hit(r, interval(0.001, infinity), rec))
+        return background;
+
+    // vec3 direction = Lambertian_Ref ? rec.normal + random_unit_vector() :
+    // random_on_hemisphere(rec.normal);
+    // //return 70% of the color from a bounce
+    // return 0.7 * ray_color(ray(rec.p, direction), depth - 1, world);//recursive
+
+    ray scattered;
+    color attenuation;
+    color color_from_emission = rec.mat->emitting(rec.u, rec.v, rec.p);
+    if (!rec.mat->scatter(r, rec, attenuation, scattered, rng))
+        return color_from_emission;
+
+    color color_from_scatter = attenuation * ray_color(scattered, depth - 1, world);
+
+    return color_from_scatter + color_from_emission;
 }

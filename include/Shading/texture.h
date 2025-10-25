@@ -2,8 +2,11 @@
 #define TEXTURE_H
 
 #include <memory>
+#include <random>
 
 #include "color.hpp"
+#include "general.hpp"
+#include "perlin.h"
 #include "rtw_stb_image.h"
 
 class texture {
@@ -51,6 +54,22 @@ class image_texture : public texture {
 
   private:
     rtw_image image;
+};
+
+class noise_texture : public texture {
+  public:
+    noise_texture(double _scale, int turb, int _freq = 4, std::mt19937 rng = get_default_rng())
+        : scale(_scale), turbulence(turb), noise(_freq, rng) {}
+
+    color value(double u, double v, const point3& p) const override {
+        return color(0.5, 0.5, 0.5) *
+               (1 + std::sin(scale * p.z() + 10 * noise.turb(p, turbulence)));
+    }
+
+  private:
+    perlin noise;
+    double scale;
+    int turbulence;
 };
 
 #endif

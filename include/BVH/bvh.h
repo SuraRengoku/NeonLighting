@@ -6,7 +6,7 @@
 
 #include "aabb.h"
 #include "general.hpp"
-#include "hittable.hpp"
+#include "hittable.h"
 #include "hittable_list.h"
 
 class bvh_node : public hittable {

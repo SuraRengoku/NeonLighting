@@ -20,3 +20,11 @@ interval interval::expand(double delta) const {
     auto padding = delta / 2;
     return interval(min - padding, max + padding);
 }
+
+interval operator+(const interval& ival, double displacement) {
+    return interval(ival.min + displacement, ival.max + displacement);
+}
+
+interval operator+(double displacement, const interval& ival) {
+    return ival + displacement;
+}
